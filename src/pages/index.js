@@ -1,117 +1,156 @@
 import Image from "next/image";
 import { Inter } from "next/font/google";
+import axios from "axios";
+import MobileDetect from "mobile-detect";
+import { useEffect, useState } from "react";
+import { Dialog, DialogTitle, DialogContent, TextField, Grid, Typography, Button, DialogActions } from "@mui/material"; // Assuming you're using MUI for UI components
+// Import QRCode component from the library you're using for QR code generation
+import QRCode from "react-qr-code"; // This is just an example, ensure to use the correct import based on the library you choose
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
+  const [amount, setAmount] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [qrValue, setQrValue] = useState(null);
+  const [yourName, setYourName] = useState(null);
+  const [open, setOpen] = useState(true); // Assuming you have a way to open/close the dialog
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  useEffect(() => {
+    console.log(qrValue)
+  }, [qrValue]);
+
+
+  const createUpiLink = appName => {
+    let upiLink = ''
+    const merchantCode = '6012'
+    const transactionReference = 'EZY2023082014160373026377'
+    switch (appName) {
+      case 'paytm':
+        upiLink = `paytmmp://pay?pa=${qrValue}&pn=${yourName}&tr=${transactionReference}&cu=INR&mc=${merchantCode}&am=${amount}`
+        break
+      case 'googlePay':
+        upiLink = `tez://upi/pay?pa=${qrValue}&pn=${yourName}&tr=${transactionReference}&cu=INR&mc=${merchantCode}&am=${amount}`
+        break
+      case 'phonePe':
+        upiLink = `phonepe://pay?pa=${qrValue}&pn=${yourName}&tr=${transactionReference}&cu=INR&mc=${merchantCode}&am=${amount}`
+        break
+      case 'others':
+        upiLink = `upi://pay?pa=${qrValue}&pn=${yourName}&tr=${transactionReference}&cu=INR&mc=${merchantCode}&am=${amount}`
+        break
+      default:
+        break
+    }
+
+    return upiLink
+  }
+
+  const handleConfirm = async () => {
+    setIsSubmitting(true)
+
+    const data = {
+      amount: amount
+    }
+
+    const accessToken = window.localStorage.getItem('accessToken')
+
+    try {
+      const headers = {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+
+      // const response = await axios.post('/api/payin', data, { headers: headers })
+      const response2 = {
+        qrValue: "payliopaymentssoluti@aubank",
+        yourName: "John Doe"
+      }
+      setQrValue(response2.qrValue)
+      setYourName(response2.yourName)
+    } catch (error) {
+      console.error('There was an error!', error)
+    }
+
+    setTimeout(() => {
+      setIsSubmitting(false)
+    }, 1000)
+  }
+
+
+  const handleChange = event => {
+    setAmount(event.target.value)
+  }
+
+  const handleAppPayment = url => {
+    const md = new MobileDetect(window.navigator.userAgent)
+    if (md.mobile()) {
+      window.location.href = url
+    } else {
+      alert('Please use a mobile device to make the payment using the app')
+    }
+  }
+
   return (
     <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
+      className={`flex min-h-screen flex-col items-center justify-center p-24 ${inter.className}`}
     >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/pages/index.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+
+      <div>
+        <Dialog open={open} onClose={handleClose}>
+          <DialogTitle>Top-Up Wallet (UPI)</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin='dense'
+              id='amount'
+              label='Amount'
+              type='number'
+              fullWidth
+              variant='standard'
+              value={amount}
+              onChange={handleChange}
             />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+            {qrValue && (
+              <Grid container direction='column' alignItems='center'>
+                <Typography variant='h6'>Scan the QR code to pay</Typography>
+                <QRCode value={qrValue} size={256} />
+                <Typography variant='body1'>Or pay using</Typography>
+                <Grid container spacing={2} justifyContent='center'>
+                  <Grid item>
+                    <Button variant='outlined' onClick={() => handleAppPayment(createUpiLink('paytm'))}>
+                      Paytm
+                    </Button>
+                  </Grid>
+                  <Grid item>
+                    <Button variant='outlined' onClick={() => handleAppPayment(createUpiLink('googlePay'))}>
+                      Google Pay
+                    </Button>
+                  </Grid>
+                  <Grid item>
+                    <Button variant='outlined' onClick={() => handleAppPayment(createUpiLink('phonePe'))}>
+                      PhonePe
+                    </Button>
+                  </Grid>
+                  <Grid item>
+                    <Button variant='outlined' onClick={() => handleAppPayment(createUpiLink('others'))}>
+                      Others
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Grid>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button disabled={isSubmitting} onClick={handleConfirm}>
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
       </div>
     </main>
   );
